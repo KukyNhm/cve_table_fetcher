@@ -4,7 +4,6 @@ Fetch up‑to‑date **CVSS base scores** (v3.1 → v3.0 → v2 fallback) fr
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
-![CI](https://github.com/your_username/cve_table_fetcher/actions/workflows/ci.yml/badge.svg)
 
 ---
 
