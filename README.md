@@ -1,6 +1,6 @@
 # CVE Table Fetcher
 
-Fetch up‑to‑date **CVSS base scores** (v3.1 → v3.0 → v2 fallback) from the NVD and **EPSS exploit‑probability scores** from FIRST for any set of CVE IDs, then render them as a colour‑coded table or a self‑contained HTML report.
+Fetch up‑to‑date **CVSS base scores** (v4.0 → v3.1 → v3.0 → v2 fallback) from the NVD and **EPSS exploit‑probability scores** from FIRST for any set of CVE IDs, then render them as a colour‑coded table or a self‑contained HTML report.
 
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
@@ -22,7 +22,7 @@ Fetch up‑to‑date **CVSS base scores** (v3.1 → v3.0 → v2 fallback) fr
 ## 🚀 Quick start
 
 ```bash
-git clone https://github.com/your_username/cve_table_fetcher.git
+git clone https://github.com/kukynhm/cve_table_fetcher.git
 cd cve_table_fetcher
 # CREATE .env with your API key - NVD_API_KEY="YOUR-NVD-KEY"
 python cve_table_fetcher.py
