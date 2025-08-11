@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """cve_table_fetcher.py
 =====================================
-Fetch **CVSS base scores** (v3.1 → v3.0 → v2 fallback) from the NVD and
+Fetch **CVSS base scores** (v4.0 → v3.1 → v3.0 → v2 fallback) from the NVD and
 **EPSS exploit-probability scores** from FIRST for any set of CVE IDs, then
 print the results in TSV/CSV/Markdown or write a self-contained **HTML** file.
 
@@ -108,7 +108,7 @@ def fetch_epss(cves: List[str]) -> Dict[str, float]:
 
 
 def fetch_cvss(cve: str) -> Tuple[Optional[float], Optional[str]]:
-    """Return (score, version) where version ∈ {v3.1,v3.0,v2}."""
+    """Return (score, version) where version ∈ {v4.0,v3.1,v3.0,v2}."""
     url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
     resp = requests.get(
         url,
@@ -117,11 +117,39 @@ def fetch_cvss(cve: str) -> Tuple[Optional[float], Optional[str]]:
         timeout=HTTP_TIMEOUT,
     )
     resp.raise_for_status()
-    metrics = resp.json().get("vulnerabilities", [{}])[0].get("cve", {}).get("metrics", {})
-    for key, ver in (("cvssMetricV31", "v3.1"), ("cvssMetricV30", "v3.0"), ("cvssMetricV2", "v2")):
-        if key in metrics and metrics[key]:
-            return metrics[key][0]["cvssData"]["baseScore"], ver
+    data = resp.json()
+    vulns = data.get("vulnerabilities") or []
+    if not vulns:
+        return None, None
+
+    metrics = vulns[0].get("cve", {}).get("metrics", {})
+
+    # Prefer NVD over CNA
+    def _prefer_nvd(items: List[dict]) -> dict:
+        for m in items:
+            if (m.get("source") or "").lower() == "nvd@nist.gov":
+                return m
+        for m in items:
+            if (m.get("type") or "").lower() == "primary":
+                return m
+        return items[0]
+
+    for key, ver in (
+        ("cvssMetricV40", "v4.0"),
+        ("cvssMetricV31", "v3.1"),
+        ("cvssMetricV30", "v3.0"),
+        ("cvssMetricV2",  "v2"),
+    ):
+        items = metrics.get(key) or []
+        if items:
+            chosen = _prefer_nvd(items)
+            cvss_data = chosen.get("cvssData") or {}
+            score = cvss_data.get("baseScore")
+            if score is not None:
+                return float(score), ver
+
     return None, None
+
 
 # --------------------------------------------------------------------------- #
 # Output helpers
@@ -235,7 +263,7 @@ def write_html_file(rows: List[dict], out_path: str):
         "Each CVE ID (Common Vulnerabilities and Exposures) uniquely identifies a publicly disclosed software or hardware vulnerability. Click the ID to view its entry in the U.S. National Vulnerability Database (NVD).</p>",
         "<p><strong>CVSS</strong> - <em>Common Vulnerability Scoring System</em> "
         "base score (0-10). It expresses the technical severity. Colours follow "
-        "the v3.1 thresholds: Low &lt; 4, Medium &lt; 7, High &lt; 9, Critical ≥ 9.</p>",
+        "the v4.0/3.1 thresholds: Low &lt; 4, Medium &lt; 7, High &lt; 9, Critical ≥ 9.</p>",
         "<p><strong>EPSS</strong> - <em>Exploit Prediction Scoring System</em> probability "
         "(0-100 %). It estimates the chance that the vulnerability will be "
         "exploited in the wild within the next 30 days. Rows in purple mark "
